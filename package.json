@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "prisma": "^5.2.0",
+    "supabase": "^1.88.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.2.0"
+  },
+  "scripts": {
+    "db-stop": "npx supabase stop --backup",
+    "db_start": "npx supabase start"
+  }
+}

@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model gym {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  phone           String
+  email           String
+  address         String
+  logo            String
+  membershipPlans membershipPlan[]
+  sessions        session[]
+  bookings        booking[]
+  payments        payment[]
+  invoices        invoice[]
+  createdAt       DateTime         @default(dbgenerated())
+  members         user[]           @relation(name: "GymMembers")
+}
+
+model user {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName String
+  lastName  String
+  phone     String
+  email     String
+  role      String
+  bookings  booking[]
+  payments  payment[]
+  invoices  invoice[]
+  createdAt DateTime  @default(dbgenerated())
+  gyms      gym[]     @relation(name: "GymMembers")
+}
+
+model membershipPlan {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gym             gym      @relation(fields: [gymId], references: [id])
+  gymId           String   @db.Uuid
+  name            String
+  price           Int
+  periodInSeconds Int
+  createdAt       DateTime @default(dbgenerated())
+}
+
+model session {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gym       gym       @relation(fields: [gymId], references: [id])
+  gymId     String    @db.Uuid
+  name      String
+  startTime DateTime
+  period    Int
+  type      String
+  bookings  booking[]
+  createdAt DateTime  @default(dbgenerated())
+}
+
+model booking {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gym       gym      @relation(fields: [gymId], references: [id])
+  gymId     String   @db.Uuid
+  session   session  @relation(fields: [sessionId], references: [id])
+  sessionId String   @db.Uuid
+  member    user     @relation(fields: [memberId], references: [id])
+  memberId  String   @db.Uuid
+  createdAt DateTime @default(dbgenerated())
+}
+
+model payment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gym       gym      @relation(fields: [gymId], references: [id])
+  gymId     String   @db.Uuid
+  member    user     @relation(fields: [memberId], references: [id])
+  memberId  String   @db.Uuid
+  createdAt DateTime @default(dbgenerated())
+}
+
+model invoice {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gym       gym      @relation(fields: [gymId], references: [id])
+  gymId     String   @db.Uuid
+  member    user     @relation(fields: [memberId], references: [id])
+  memberId  String   @db.Uuid
+  createdAt DateTime @default(dbgenerated())
+}
