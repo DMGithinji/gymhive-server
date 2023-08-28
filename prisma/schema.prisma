@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,83 +7,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model gym {
+enum UserRole {
+  GYM_OWNER
+  STAFF
+  MEMBER
+}
+
+model User {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName   String
+  lastName    String
+  phone       String
+  email       String
+  role        UserRole
+  ownedGyms   Gym[]           @relation("OwnedGyms")
+  memberships GymMembership[] @relation("UserGymMemberships")
+  bookings    Booking[]       @relation("UserBookings")
+  payments    Payment[]
+  invoices    Invoice[]
+  createdAt   DateTime        @default(dbgenerated("now()"))
+}
+
+model Gym {
   id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name            String
   phone           String
   email           String
   address         String
-  logo            String
-  membershipPlans membershipPlan[]
-  sessions        session[]
-  bookings        booking[]
-  payments        payment[]
-  invoices        invoice[]
-  createdAt       DateTime         @default(dbgenerated())
-  members         user[]           @relation(name: "GymMembers")
+  logo            String?
+  ownerId         String           @db.Uuid
+  owner           User             @relation(fields: [ownerId], references: [id], name: "OwnedGyms", onDelete: Cascade)
+  members         GymMembership[]  @relation("GymMemberships")
+  membershipPlans MembershipPlan[]
+  sessions        Session[]
+  bookings        Booking[]
+  payments        Payment[]
+  invoices        Invoice[]
+  createdAt       DateTime         @default(dbgenerated("now()"))
 }
 
-model user {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  firstName String
-  lastName  String
-  phone     String
-  email     String
-  role      String
-  bookings  booking[]
-  payments  payment[]
-  invoices  invoice[]
-  createdAt DateTime  @default(dbgenerated())
-  gyms      gym[]     @relation(name: "GymMembers")
+model GymMembership {
+  user   User   @relation(fields: [userId], references: [id], name: "UserGymMemberships", onDelete: Cascade)
+  userId String @db.Uuid
+  gym    Gym    @relation(fields: [gymId], references: [id], name: "GymMemberships", onDelete: Cascade)
+  gymId  String @db.Uuid
+
+  @@id([userId, gymId])
 }
 
-model membershipPlan {
+model MembershipPlan {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  gym             gym      @relation(fields: [gymId], references: [id])
+  gym             Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
   gymId           String   @db.Uuid
   name            String
   price           Int
   periodInSeconds Int
-  createdAt       DateTime @default(dbgenerated())
+  createdAt       DateTime @default(dbgenerated("now()"))
 }
 
-model session {
+model Session {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  gym       gym       @relation(fields: [gymId], references: [id])
+  gym       Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
   gymId     String    @db.Uuid
   name      String
   startTime DateTime
   period    Int
   type      String
-  bookings  booking[]
-  createdAt DateTime  @default(dbgenerated())
+  bookings  Booking[]
+  createdAt DateTime  @default(dbgenerated("now()"))
 }
 
-model booking {
+model Booking {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  gym       gym      @relation(fields: [gymId], references: [id])
+  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
   gymId     String   @db.Uuid
-  session   session  @relation(fields: [sessionId], references: [id])
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId String   @db.Uuid
-  member    user     @relation(fields: [memberId], references: [id])
+  member    User     @relation(fields: [memberId], references: [id], name: "UserBookings", onDelete: Cascade)
   memberId  String   @db.Uuid
-  createdAt DateTime @default(dbgenerated())
+  createdAt DateTime @default(dbgenerated("now()"))
 }
 
-model payment {
+model Payment {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  gym       gym      @relation(fields: [gymId], references: [id])
+  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
   gymId     String   @db.Uuid
-  member    user     @relation(fields: [memberId], references: [id])
+  member    User     @relation(fields: [memberId], references: [id], onDelete: Cascade)
   memberId  String   @db.Uuid
-  createdAt DateTime @default(dbgenerated())
+  amount    Int // Payment amount
+  createdAt DateTime @default(dbgenerated("now()"))
 }
 
-model invoice {
+model Invoice {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  gym       gym      @relation(fields: [gymId], references: [id])
+  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
   gymId     String   @db.Uuid
-  member    user     @relation(fields: [memberId], references: [id])
+  member    User     @relation(fields: [memberId], references: [id], onDelete: Cascade)
   memberId  String   @db.Uuid
-  createdAt DateTime @default(dbgenerated())
+  total     Int // Invoice total
+  createdAt DateTime @default(dbgenerated("now()"))
 }
