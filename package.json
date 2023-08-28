@@ -9,5 +9,8 @@
   "scripts": {
     "db-stop": "npx supabase stop --backup",
     "db_start": "npx supabase start"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
